@@ -9,7 +9,10 @@
           <span>←</span>
           <span>All games</span>
         </RouterLink>
-        <div v-if="game" class="flex items-center gap-3 border-l border-gray-800 pl-4">
+        <div
+          v-if="game"
+          class="flex items-center gap-3 border-l border-gray-800 pl-4"
+        >
           <span class="font-semibold text-white">{{ game.title }}</span>
           <div class="flex gap-1.5">
             <span
@@ -25,16 +28,27 @@
     </header>
 
     <div class="flex-1 flex flex-col">
-      <div v-if="!game" class="flex flex-col items-center justify-center flex-1 gap-4">
+      <div
+        v-if="!game"
+        class="flex flex-col items-center justify-center flex-1 gap-4"
+      >
         <span class="text-5xl opacity-30">🔍</span>
-        <p class="text-gray-500 text-sm">Game not found.</p>
-        <RouterLink to="/" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+        <p class="text-gray-500 text-sm">
+          Game not found.
+        </p>
+        <RouterLink
+          to="/"
+          class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+        >
           Back to all games
         </RouterLink>
       </div>
 
       <Suspense v-else>
-        <component :is="gameComponent" class="flex-1" />
+        <component
+          :is="gameComponent"
+          class="flex-1"
+        />
         <template #fallback>
           <GameLoader />
         </template>
@@ -44,18 +58,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent } from 'vue';
-import { useRoute, RouterLink } from 'vue-router';
+import { computed, defineAsyncComponent, } from 'vue';
+import { useRoute, RouterLink, } from 'vue-router';
 import GameLoader from '../components/GameLoader.vue';
-import { gamesStore } from '../stores/games.ts';
+import { gamesStore, } from '../stores/games.ts';
 
 const route = useRoute();
 
-const game = computed(() => gamesStore.games.find(g => g.id === route.params['id']));
+const game = computed(() => gamesStore.games.find((g,) => g.id === route.params['id'],),);
 
 const gameComponent = computed(() =>
   game.value
-    ? defineAsyncComponent(game.value.load)
+    ? defineAsyncComponent(game.value.load,)
     : null,
 );
 </script>

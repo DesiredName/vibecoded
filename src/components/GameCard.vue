@@ -14,7 +14,10 @@
       <p class="text-sm text-gray-400 mt-1 line-clamp-2 leading-relaxed">
         {{ game.description }}
       </p>
-      <div v-if="game.tags.length > 0" class="flex gap-1.5 mt-3 flex-wrap">
+      <div
+        v-if="game.tags.length > 0"
+        class="flex gap-1.5 mt-3 flex-wrap"
+      >
         <span
           v-for="tag in game.tags"
           :key="tag"
@@ -28,8 +31,8 @@
 </template>
 
 <script setup lang="ts">
-import { RouterLink } from 'vue-router';
-import type { Game } from '../types/game.ts';
+import { RouterLink, } from 'vue-router';
+import type { Game, } from '../types/game.ts';
 
 defineProps<{
   game: Game;

@@ -19,9 +19,15 @@ export default tseslint.config(
     },
   },
   {
+    files: ['**/*.ts', '**/*.vue'],
+    rules: {
+      'no-undef': 'off',
+    },
+  },
+  {
     rules: {
       'semi': ['error', 'always'],
-      'comma-dangle': ['error', 'all'],
+      'comma-dangle': ['error', 'always'],
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', {
         argsIgnorePattern: '^_',
