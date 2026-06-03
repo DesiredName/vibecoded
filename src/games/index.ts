@@ -15,4 +15,11 @@ export const GAMES: Game[] = [
     tags: ['3D', 'arcade',],
     load: () => import('./breakout/BreakoutGame.vue'),
   },
+  {
+    id: 'asteroids',
+    title: 'Asteroids',
+    description: 'Blast asteroids in deep space. Survive the waves — big rocks split into faster fragments.',
+    tags: ['3D', 'arcade', 'shooter',],
+    load: () => import('./asteroids/AsteroidsGame.vue'),
+  },
 ];
