@@ -1,4 +1,4 @@
-import { reactive, readonly } from 'vue';
+import { reactive } from 'vue';
 import type { Game } from '../types/game.ts';
 import { GAMES } from '../games/index.ts';
 
@@ -11,5 +11,5 @@ const state = reactive<GamesState>({
 });
 
 export const gamesStore = {
-  get games(): readonly Game[] { return readonly(state).games; },
+  get games(): readonly Game[] { return state.games; },
 };
