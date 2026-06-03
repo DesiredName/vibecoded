@@ -8,4 +8,11 @@ export const GAMES: Game[] = [
     tags: ['3D', 'arcade',],
     load: () => import('./snake/SnakeGame.vue'),
   },
+  {
+    id: 'breakout',
+    title: 'Breakout 3D',
+    description: 'Classic brick-breaker in 3-D. Move the paddle to bounce the ball and clear all bricks.',
+    tags: ['3D', 'arcade',],
+    load: () => import('./breakout/BreakoutGame.vue'),
+  },
 ];
