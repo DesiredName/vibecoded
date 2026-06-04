@@ -18,6 +18,32 @@
       </span>
     </div>
 
+    <!-- Combo banner -->
+    <Transition name="combo">
+      <div
+        v-if="comboLabel"
+        class="absolute top-16 left-1/2 -translate-x-1/2 pointer-events-none select-none text-center"
+      >
+        <span
+          class="font-black tracking-widest text-lg px-4 py-1 rounded-full"
+          :class="comboClass"
+        >{{ comboLabel }}</span>
+      </div>
+    </Transition>
+
+    <!-- Power-up banner -->
+    <Transition name="powerup">
+      <div
+        v-if="powerUpLabel"
+        class="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none select-none text-center"
+      >
+        <span
+          class="font-black tracking-widest text-base px-5 py-1.5 rounded-full border"
+          :class="powerUpClass"
+        >{{ powerUpLabel }}</span>
+      </div>
+    </Transition>
+
     <!-- Launch hint -->
     <Transition name="fade">
       <div
@@ -43,7 +69,9 @@
         v-if="gameOver"
         class="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/80 backdrop-blur-sm"
       >
-        <p class="text-5xl font-black text-white tracking-tight mb-1">Game Over</p>
+        <p class="text-5xl font-black text-white tracking-tight mb-1">
+          Game Over
+        </p>
         <p class="text-gray-400 text-lg mb-8">
           Score: <span class="text-blue-400 font-bold">{{ score }}</span>
         </p>
@@ -62,7 +90,9 @@
         v-if="won"
         class="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/80 backdrop-blur-sm"
       >
-        <p class="text-5xl font-black text-yellow-400 tracking-tight mb-1">You Win!</p>
+        <p class="text-5xl font-black text-yellow-400 tracking-tight mb-1">
+          You Win!
+        </p>
         <p class="text-gray-400 text-lg mb-8">
           Score: <span class="text-blue-400 font-bold">{{ score }}</span>
         </p>
@@ -78,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, } from 'vue';
+import { ref, computed, onMounted, onUnmounted, } from 'vue';
 import { createBreakoutGame, } from './game.ts';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null,);
@@ -87,12 +117,40 @@ const lives = ref(3,);
 const gameOver = ref(false,);
 const won = ref(false,);
 const waiting = ref(true,);
+const combo = ref(0,);
+const powerUpLabel = ref('',);
 
 let game: ReturnType<typeof createBreakoutGame> | null = null;
+let powerUpTimer: ReturnType<typeof setTimeout> | null = null;
+
+const comboLabel = computed(() => {
+  if (combo.value >= 8) return '5× COMBO!';
+  if (combo.value >= 5) return '3× COMBO!';
+  if (combo.value >= 3) return '2× COMBO!';
+  return '';
+},);
+
+const comboClass = computed(() => {
+  if (combo.value >= 8) return 'text-pink-400 bg-pink-950/80 border border-pink-500/50';
+  if (combo.value >= 5) return 'text-orange-400 bg-orange-950/80 border border-orange-500/50';
+  return 'text-yellow-400 bg-yellow-950/80 border border-yellow-600/50';
+},);
+
+const powerUpClass = computed(() => {
+  if (powerUpLabel.value === 'FIREBALL') return 'text-orange-400 bg-orange-950/80 border-orange-500/50';
+  if (powerUpLabel.value === 'MULTI-BALL') return 'text-green-400 bg-green-950/80 border-green-500/50';
+  return 'text-blue-400 bg-blue-950/80 border-blue-500/50';
+},);
+
+function showPowerUp(label: string,) {
+  if (powerUpTimer !== null) clearTimeout(powerUpTimer,);
+  powerUpLabel.value = label;
+  powerUpTimer = setTimeout(() => { powerUpLabel.value = ''; }, 2200,);
+}
 
 function onLaunch() { waiting.value = false; }
 
-function onLaunchKey(e: KeyboardEvent) {
+function onLaunchKey(e: KeyboardEvent,) {
   if (e.key === ' ' || e.key === 'Enter') onLaunch();
 }
 
@@ -102,6 +160,9 @@ function restart() {
   waiting.value = true;
   score.value = 0;
   lives.value = 3;
+  combo.value = 0;
+  powerUpLabel.value = '';
+  if (powerUpTimer !== null) { clearTimeout(powerUpTimer,); powerUpTimer = null; }
   game?.restart();
 }
 
@@ -120,11 +181,14 @@ onMounted(() => {
     },
     onGameOver: () => { gameOver.value = true; },
     onWin: () => { won.value = true; },
+    onCombo: (c,) => { combo.value = c; },
+    onPowerUp: showPowerUp,
   },);
 },);
 
 onUnmounted(() => {
   game?.destroy();
+  if (powerUpTimer !== null) clearTimeout(powerUpTimer,);
   canvasRef.value?.removeEventListener('click', onLaunch,);
   canvasRef.value?.removeEventListener('touchstart', onLaunch,);
   window.removeEventListener('keydown', onLaunchKey,);
@@ -141,4 +205,14 @@ onUnmounted(() => {
 .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from,
 .fade-leave-to { opacity: 0; }
+
+.combo-enter-active { transition: opacity 0.15s ease; }
+.combo-leave-active { transition: opacity 0.3s ease; }
+.combo-enter-from,
+.combo-leave-to { opacity: 0; }
+
+.powerup-enter-active { transition: opacity 0.2s ease; }
+.powerup-leave-active { transition: opacity 0.4s ease; }
+.powerup-enter-from,
+.powerup-leave-to { opacity: 0; }
 </style>
