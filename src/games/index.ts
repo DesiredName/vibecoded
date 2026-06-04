@@ -22,4 +22,11 @@ export const GAMES: Game[] = [
     tags: ['3D', 'arcade', 'shooter',],
     load: () => import('./asteroids/AsteroidsGame.vue'),
   },
+  {
+    id: 'tower-defense',
+    title: 'Tower Defense',
+    description: 'Build towers on a procedural map, stop endless waves of enemies. Monsters gain HP and armor each wave.',
+    tags: ['strategy', 'arcade',],
+    load: () => import('./tower-defense/TowerDefenseGame.vue'),
+  },
 ];
