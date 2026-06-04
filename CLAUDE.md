@@ -155,3 +155,15 @@ A function becomes a utility when the **same logic** appears in 2 or more unrela
 - No comments unless the *why* is non-obvious
 - No backwards-compat shims for removed code — delete it
 - Semicolons required, trailing commas everywhere
+
+---
+
+## After Every Task — MANDATORY
+
+**This step is required after every task, no exceptions, no skipping.**
+
+1. Run `npm run build`.
+2. Read the output — if there are any errors, fix them.
+3. Re-run `npm run build` until it passes cleanly.
+
+A task is not complete until the build passes.

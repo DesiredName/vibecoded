@@ -126,7 +126,7 @@ export function createSnakeGame(canvas: HTMLCanvasElement, callbacks: Callbacks,
   const foodGeoGhost = new THREE.SphereGeometry(CELL * 0.44, 10, 8,);
   const foodGeoMultiplier = new THREE.OctahedronGeometry(CELL * 0.50, 0,);
 
-  const foodMesh = new THREE.Mesh(foodGeoNormal, foodMatNormal,);
+  const foodMesh: THREE.Mesh<THREE.BufferGeometry, THREE.Material> = new THREE.Mesh(foodGeoNormal, foodMatNormal,);
   foodMesh.castShadow = true;
   scene.add(foodMesh,);
 
