@@ -10,11 +10,13 @@
       <span>Score: <span class="text-blue-400 font-bold">{{ score }}</span></span>
       <span class="text-gray-600">|</span>
       <span class="flex gap-1">
-        <span
+        <Heart
           v-for="i in 3"
           :key="i"
+          :size="16"
           :class="i <= lives ? 'text-red-400' : 'text-gray-700'"
-        >♥</span>
+          fill="currentColor"
+        />
       </span>
     </div>
 
@@ -58,9 +60,9 @@
     <!-- Controls hint (while playing, desktop only) -->
     <div
       v-if="!waiting && !gameOver && !won"
-      class="absolute bottom-5 left-1/2 -translate-x-1/2 text-xs text-gray-700 pointer-events-none select-none hidden sm:block"
+      class="absolute bottom-5 left-1/2 -translate-x-1/2 text-xs text-gray-700 pointer-events-none select-none hidden sm:flex items-center gap-1"
     >
-      ← → or A D to move
+      <ArrowLeft :size="11" /><ArrowRight :size="11" /> or A D to move
     </div>
 
     <!-- Game Over overlay -->
@@ -109,6 +111,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, } from 'vue';
+import { ArrowLeft, ArrowRight, Heart, } from '@lucide/vue';
 import { createBreakoutGame, } from './game.ts';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null,);

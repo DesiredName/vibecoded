@@ -5,7 +5,7 @@
   >
     <div class="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center relative overflow-hidden">
       <div class="absolute inset-0 bg-gradient-to-br from-indigo-900/20 to-purple-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-      <span class="text-5xl select-none">🎮</span>
+      <Gamepad2 :size="48" class="text-gray-600 select-none" />
     </div>
     <div class="p-4">
       <h3 class="font-semibold text-white group-hover:text-indigo-400 transition-colors duration-150 truncate">
@@ -32,6 +32,7 @@
 
 <script setup lang="ts">
 import { RouterLink, } from 'vue-router';
+import { Gamepad2, } from '@lucide/vue';
 import type { Game, } from '../types/game.ts';
 
 defineProps<{

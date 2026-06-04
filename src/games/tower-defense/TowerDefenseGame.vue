@@ -8,7 +8,7 @@
 
     <!-- HUD top bar -->
     <div class="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-gray-900/85 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-1.5 text-xs sm:text-sm font-mono pointer-events-none whitespace-nowrap">
-      <span>Wave <span class="text-cyan-400 font-bold">{{ wave || 'â€”' }}</span></span>
+      <span>Wave <span class="text-cyan-400 font-bold">{{ wave || '—' }}</span></span>
       <span class="text-gray-600">|</span>
       <span>Gold <span class="text-yellow-400 font-bold">{{ gold }}</span></span>
       <span class="text-gray-600">|</span>
@@ -40,17 +40,19 @@
       <button
         v-for="t in towerTypes"
         :key="t"
-        class="flex flex-col items-center rounded-xl border-2 transition-colors px-3 py-1.5 min-w-[72px] sm:min-w-[80px] active:opacity-70"
+        class="flex flex-col items-center rounded-xl border-2 transition-colors px-3 py-1.5 min-w-18 sm:min-w-20 active:opacity-70"
         :class="selectedTower === t
           ? 'bg-gray-700/90 border-white/30'
           : 'bg-gray-900/80 border-gray-600/40 hover:border-gray-500/60'"
         :style="selectedTower === t ? { borderColor: DEFS[t].hex } : {}"
         @click.stop="selectedTower = t"
       >
-        <span
-          class="text-sm font-bold mb-0.5"
+        <component
+          :is="DEFS[t].icon"
+          :size="16"
+          class="mb-0.5"
           :style="{ color: DEFS[t].hex }"
-        >{{ DEFS[t].icon }}</span>
+        />
         <span class="text-white text-xs font-mono">{{ DEFS[t].label }}</span>
         <span class="text-yellow-400 text-xs font-mono">{{ DEFS[t].cost }}g</span>
       </button>
@@ -93,27 +95,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, } from 'vue';
-import { createTowerDefenseGame, TOWER_DEFS, } from './game.ts';
-import type { TowerType, Phase, } from './game.ts';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { Shield, Zap, Bomb } from '@lucide/vue';
+import { createTowerDefenseGame, TOWER_DEFS } from './game.ts';
+import type { TowerType, Phase } from './game.ts';
 
-const canvasRef = ref<HTMLCanvasElement | null>(null,);
-const wave = ref(0,);
-const gold = ref(0,);
-const score = ref(0,);
-const lives = ref(20,);
-const phase = ref<Phase>('prep',);
-const prepTimer = ref(6,);
-const gameOver = ref(false,);
-const showNoGold = ref(false,);
-const selectedTower = ref<TowerType>('basic',);
+const canvasRef = ref<HTMLCanvasElement | null>(null);
+const wave = ref(0);
+const gold = ref(0);
+const score = ref(0);
+const lives = ref(20);
+const phase = ref<Phase>('prep');
+const prepTimer = ref(6);
+const gameOver = ref(false);
+const showNoGold = ref(false);
+const selectedTower = ref<TowerType>('basic');
 
-const towerTypes: TowerType[] = ['basic', 'sniper', 'splash',];
+const towerTypes: TowerType[] = ['basic', 'sniper', 'splash'];
 
 const DEFS = {
-  basic:  { label: 'Basic',  icon: 'â– ', hex: '#00aaff', cost: TOWER_DEFS.basic.cost,  },
-  sniper: { label: 'Sniper', icon: 'â–²', hex: '#9933ff', cost: TOWER_DEFS.sniper.cost, },
-  splash: { label: 'Splash', icon: 'â—‰', hex: '#ff6600', cost: TOWER_DEFS.splash.cost, },
+  basic:  { label: 'Basic',  icon: Shield, hex: '#00aaff', cost: TOWER_DEFS.basic.cost  },
+  sniper: { label: 'Sniper', icon: Zap,    hex: '#9933ff', cost: TOWER_DEFS.sniper.cost },
+  splash: { label: 'Splash', icon: Bomb,   hex: '#ff6600', cost: TOWER_DEFS.splash.cost },
 } as const;
 
 let game: ReturnType<typeof createTowerDefenseGame> | null = null;
@@ -121,15 +124,15 @@ let noGoldTimer: ReturnType<typeof setTimeout> | null = null;
 
 function flashNoGold() {
   showNoGold.value = true;
-  if (noGoldTimer) clearTimeout(noGoldTimer,);
-  noGoldTimer = setTimeout(() => { showNoGold.value = false; }, 1200,);
+  if (noGoldTimer) clearTimeout(noGoldTimer);
+  noGoldTimer = setTimeout(() => { showNoGold.value = false; }, 1200);
 }
 
-function onCanvasClick(e: MouseEvent,) {
+function onCanvasClick(e: MouseEvent) {
   if (!game || gameOver.value) return;
-  const cell = game.canvasToCell(e.clientX, e.clientY,);
+  const cell = game.canvasToCell(e.clientX, e.clientY);
   if (!cell) return;
-  const placed = game.placeTower(cell.col, cell.row, selectedTower.value,);
+  const placed = game.placeTower(cell.col, cell.row, selectedTower.value);
   if (!placed && gold.value < TOWER_DEFS[selectedTower.value].cost) flashNoGold();
 }
 
@@ -142,20 +145,20 @@ function restart() {
 onMounted(() => {
   if (!canvasRef.value) return;
   game = createTowerDefenseGame(canvasRef.value, {
-    onWave:      (n,) => { wave.value = n; },
-    onGold:      (g,) => { gold.value = g; },
-    onScore:     (s,) => { score.value = s; },
-    onLives:     (l,) => { lives.value = l; },
-    onPhase:     (p,) => { phase.value = p; },
-    onPrepTimer: (s,) => { prepTimer.value = s; },
+    onWave:      (n) => { wave.value = n; },
+    onGold:      (g) => { gold.value = g; },
+    onScore:     (s) => { score.value = s; },
+    onLives:     (l) => { lives.value = l; },
+    onPhase:     (p) => { phase.value = p; },
+    onPrepTimer: (s) => { prepTimer.value = s; },
     onGameOver:  () => { gameOver.value = true; },
-  },);
-},);
+  });
+});
 
 onUnmounted(() => {
-  if (noGoldTimer) clearTimeout(noGoldTimer,);
+  if (noGoldTimer) clearTimeout(noGoldTimer);
   game?.destroy();
-},);
+});
 </script>
 
 <style scoped>

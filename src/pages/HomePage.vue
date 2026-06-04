@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-950 text-white">
     <header class="border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-10">
       <div class="max-w-7xl mx-auto px-6 py-4 flex items-center gap-3">
-        <span class="text-2xl">🕹️</span>
+        <Gamepad2 :size="28" class="text-indigo-400" />
         <div>
           <h1 class="text-xl font-bold tracking-tight">
             VibeCoded
@@ -41,6 +41,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, } from 'vue';
+import { Gamepad2, } from '@lucide/vue';
 import GameCard from '../components/GameCard.vue';
 import NewsCard from '../components/NewsCard.vue';
 import EmptyState from '../components/EmptyState.vue';

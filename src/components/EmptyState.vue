@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col items-center justify-center py-32 text-center">
-    <span class="text-6xl mb-6 opacity-30">🎮</span>
+    <Gamepad2 :size="64" class="mb-6 opacity-30 text-gray-400" />
     <h2 class="text-xl font-semibold text-gray-400">
       No games yet
     </h2>
@@ -9,3 +9,7 @@
     </p>
   </div>
 </template>
+
+<script setup lang="ts">
+import { Gamepad2, } from '@lucide/vue';
+</script>

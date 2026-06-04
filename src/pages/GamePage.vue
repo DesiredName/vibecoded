@@ -6,7 +6,7 @@
           to="/"
           class="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors duration-150"
         >
-          <span>←</span>
+          <ArrowLeft :size="16" />
           <span>All games</span>
         </RouterLink>
         <div
@@ -32,7 +32,7 @@
         v-if="!game"
         class="flex flex-col items-center justify-center flex-1 gap-4"
       >
-        <span class="text-5xl opacity-30">🔍</span>
+        <Search :size="64" class="opacity-30 text-gray-400" />
         <p class="text-gray-500 text-sm">
           Game not found.
         </p>
@@ -59,6 +59,7 @@
 
 <script setup lang="ts">
 import { computed, defineAsyncComponent, } from 'vue';
+import { ArrowLeft, Search, } from '@lucide/vue';
 import { useRoute, RouterLink, } from 'vue-router';
 import GameLoader from '../components/GameLoader.vue';
 import { gamesStore, } from '../stores/games.ts';

@@ -10,17 +10,20 @@
       <span>Score: <span class="text-cyan-400 font-bold">{{ score }}</span></span>
       <span class="text-gray-600">|</span>
       <span class="flex gap-1 text-cyan-400">
-        <span
+        <Triangle
           v-for="i in 3"
           :key="i"
+          :size="14"
           :class="i <= lives ? 'opacity-100' : 'opacity-20'"
-        >▲</span>
+          fill="currentColor"
+        />
       </span>
     </div>
 
     <!-- Desktop controls hint -->
-    <div class="absolute bottom-5 left-1/2 -translate-x-1/2 text-xs text-gray-700 pointer-events-none select-none hidden sm:block">
-      ← → rotate &nbsp;|&nbsp; ↑ / W thrust &nbsp;|&nbsp; Space fire
+    <div class="absolute bottom-5 left-1/2 -translate-x-1/2 text-xs text-gray-700 pointer-events-none select-none hidden sm:flex items-center gap-1">
+      <ArrowLeft :size="11" class="inline-block" /><ArrowRight :size="11" class="inline-block" /> rotate &nbsp;|&nbsp;
+      <ArrowUp :size="11" class="inline-block" /> / W thrust &nbsp;|&nbsp; Space fire
     </div>
 
     <!-- Mobile virtual controls -->
@@ -32,7 +35,7 @@
           @touchend.prevent="setCtrl('left', false)"
           @touchcancel.prevent="setCtrl('left', false)"
         >
-          ◄
+          <ChevronLeft :size="24" />
         </button>
         <button
           class="w-14 h-14 rounded-full bg-gray-800/80 border border-gray-600/60 text-white text-xl flex items-center justify-center active:bg-gray-600/80"
@@ -40,7 +43,7 @@
           @touchend.prevent="setCtrl('right', false)"
           @touchcancel.prevent="setCtrl('right', false)"
         >
-          ►
+          <ChevronRight :size="24" />
         </button>
       </div>
 
@@ -51,7 +54,7 @@
           @touchend.prevent="setCtrl('thrust', false)"
           @touchcancel.prevent="setCtrl('thrust', false)"
         >
-          ▲
+          <ChevronUp :size="24" />
         </button>
         <button
           class="w-14 h-14 rounded-full bg-yellow-900/80 border border-yellow-600/60 text-yellow-400 text-xl flex items-center justify-center active:bg-yellow-700/80"
@@ -59,7 +62,7 @@
           @touchend.prevent="setCtrl('fire', false)"
           @touchcancel.prevent="setCtrl('fire', false)"
         >
-          ●
+          <Zap :size="24" />
         </button>
       </div>
     </div>
@@ -89,6 +92,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, } from 'vue';
+import { ArrowLeft, ArrowRight, ArrowUp, ChevronLeft, ChevronRight, ChevronUp, Triangle, Zap, } from '@lucide/vue';
 import { createAsteroidsGame, } from './game.ts';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null,);
