@@ -12,6 +12,22 @@
       Score: <span class="text-green-400 font-bold">{{ score }}</span>
     </div>
 
+    <Transition name="powerup">
+      <div
+        v-if="powerUpLabel"
+        class="absolute top-16 inset-x-0 flex justify-center pointer-events-none select-none"
+      >
+        <span
+          class="font-black text-2xl tracking-widest px-4 py-1 rounded-lg"
+          :class="powerUpLabel === 'GHOST MODE'
+            ? 'text-blue-300 bg-blue-900/60'
+            : 'text-yellow-300 bg-yellow-900/60'"
+        >
+          {{ powerUpLabel }}!
+        </span>
+      </div>
+    </Transition>
+
     <div class="absolute bottom-5 left-1/2 -translate-x-1/2 text-xs text-gray-600 pointer-events-none select-none">
       Arrow keys or WASD to move
     </div>
@@ -45,12 +61,22 @@ import { createSnakeGame, } from './game.ts';
 const canvasRef = ref<HTMLCanvasElement | null>(null,);
 const score = ref(0,);
 const dead = ref(false,);
+const powerUpLabel = ref('',);
 
 let game: ReturnType<typeof createSnakeGame> | null = null;
+let powerUpTimer: ReturnType<typeof setTimeout> | null = null;
+
+function showPowerUp(label: string,) {
+  powerUpLabel.value = label;
+  if (powerUpTimer) clearTimeout(powerUpTimer,);
+  powerUpTimer = setTimeout(() => { powerUpLabel.value = ''; }, 2200,);
+}
 
 function restart() {
   dead.value = false;
   score.value = 0;
+  powerUpLabel.value = '';
+  if (powerUpTimer) clearTimeout(powerUpTimer,);
   game?.restart();
 }
 
@@ -59,11 +85,13 @@ onMounted(() => {
   game = createSnakeGame(canvasRef.value, {
     onScore: (s,) => { score.value = s; },
     onDeath: () => { dead.value = true; },
+    onPowerUp: showPowerUp,
   },);
 },);
 
 onUnmounted(() => {
   game?.destroy();
+  if (powerUpTimer) clearTimeout(powerUpTimer,);
 },);
 </script>
 
@@ -75,5 +103,20 @@ onUnmounted(() => {
 .overlay-enter-from,
 .overlay-leave-to {
   opacity: 0;
+}
+
+.powerup-enter-active {
+  transition: opacity 0.1s ease-out, transform 0.1s ease-out;
+}
+.powerup-leave-active {
+  transition: opacity 0.5s ease-in, transform 0.5s ease-in;
+}
+.powerup-enter-from {
+  opacity: 0;
+  transform: scale(0.75);
+}
+.powerup-leave-to {
+  opacity: 0;
+  transform: scale(1.15) translateY(-8px);
 }
 </style>
