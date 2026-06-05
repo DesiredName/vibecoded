@@ -29,4 +29,11 @@ export const GAMES: Game[] = [
     tags: ['strategy', 'arcade',],
     load: () => import('./tower-defense/TowerDefenseGame.vue'),
   },
+  {
+    id: 'moon-landing',
+    title: 'Moon Landing',
+    description: 'Pilot a descent module to a marked landing pad. Analog thrust and tilt controls, limited fuel, procedural terrain.',
+    tags: ['3D', 'arcade', 'physics',],
+    load: () => import('./moon-landing/MoonLandingGame.vue'),
+  },
 ];

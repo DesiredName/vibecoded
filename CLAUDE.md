@@ -158,6 +158,55 @@ A function becomes a utility when the **same logic** appears in 2 or more unrela
 
 ---
 
+## Brand Colors
+
+The portal uses a dark gaming aesthetic throughout. All game scenes are rendered in Three.js; UI chrome uses Tailwind CSS.
+
+### UI Chrome (Tailwind)
+
+| Role | Class / Value |
+|---|---|
+| Page background | `bg-gray-950` |
+| Card background | `bg-gray-900` |
+| Border (default) | `border-gray-800` |
+| Border (hover) | `border-indigo-500/60` |
+| Primary text | `text-white` |
+| Muted text | `text-gray-400` / `text-gray-500` |
+| Primary accent | `text-indigo-400` / `text-indigo-300` |
+| Accent overlay | `bg-indigo-900/20`, `bg-purple-900/20` |
+| News / alert accent | `text-amber-400` / `text-amber-500/80` |
+
+### Three.js Scene Palette (shared across games)
+
+| Role | Hex |
+|---|---|
+| Scene background / floor | `0x07080f` – `0x0d1120` |
+| Grid lines (major / minor) | `0x1a2840` / `0x111828` |
+| Ambient light | `0x334466` |
+| Directional / accent light | `0x4488ff` |
+
+### Per-Game Accent Colors
+
+| Game | Primary | Secondary | Notes |
+|---|---|---|---|
+| Snake | `0x00ff88` bright green | `0xff2255` pink (food) | Ghost mode uses blues (`0x88ccff`, `0x4488ff`) |
+| Breakout | `0x4499ff` blue (paddle) | `0xffffff` white (ball) | Bricks cycle red → orange → gold → green → blue → purple |
+| Asteroids | `0x00ffcc` cyan (ship) | `0xffff44` yellow (bullets) | Asteroids in grayish-blues (`0x6677aa`→`0xaaddff`) |
+| Moon Landing | theme-driven | theme-driven | 4 planet themes: Moon (blue-gray), Mars (orange), Venus (green), Jupiter (gold) |
+| Tower Defense | `0x00aaff` cyan (basic) / `0x9933ff` purple (sniper) / `0xff6600` orange (splash) | `0xff2233` red (enemies) | Grid path `0x1e2c3c`, walls `0x070c12` |
+
+### In-Game UI (score / status overlays)
+
+| Context | Class |
+|---|---|
+| Snake score | `text-green-400` |
+| Breakout score | `text-blue-400` |
+| Asteroids score | `text-cyan-400` |
+| Win state | `text-yellow-400` |
+| Lives / health | `text-red-400` |
+
+---
+
 ## After Every Task — MANDATORY
 
 **This step is required after every task, no exceptions, no skipping.**
