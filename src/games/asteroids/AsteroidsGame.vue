@@ -7,6 +7,8 @@
 
     <!-- HUD -->
     <div class="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-gray-900/80 backdrop-blur-sm border border-gray-700/60 rounded-full px-6 py-2 text-sm font-mono pointer-events-none select-none">
+      <span class="text-gray-500 text-xs uppercase tracking-widest">Wave <span class="text-blue-400 font-bold">{{ wave }}</span></span>
+      <span class="text-gray-600">|</span>
       <span>Score: <span class="text-cyan-400 font-bold">{{ score }}</span></span>
       <span class="text-gray-600">|</span>
       <span class="flex gap-1 text-cyan-400">
@@ -19,6 +21,27 @@
         />
       </span>
     </div>
+
+    <!-- Combo badge -->
+    <Transition name="powerup">
+      <div
+        v-if="comboLabel"
+        class="absolute top-16 left-1/2 -translate-x-1/2 text-sm font-black tracking-wider pointer-events-none select-none px-4 py-1.5 rounded-full border"
+        :class="comboClass"
+      >
+        {{ comboLabel }}
+      </div>
+    </Transition>
+
+    <!-- Wave announcement -->
+    <Transition name="wave-banner">
+      <div
+        v-if="waveLabel"
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none select-none"
+      >
+        <p class="text-4xl font-black text-blue-400 tracking-[0.3em] uppercase">{{ waveLabel }}</p>
+      </div>
+    </Transition>
 
     <!-- Desktop controls hint -->
     <div class="absolute bottom-5 left-1/2 -translate-x-1/2 text-xs text-gray-700 pointer-events-none select-none hidden sm:flex items-center gap-1">
@@ -91,16 +114,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, } from 'vue';
+import { ref, computed, onMounted, onUnmounted, } from 'vue';
 import { ArrowLeft, ArrowRight, ArrowUp, ChevronLeft, ChevronRight, ChevronUp, Triangle, Zap, } from '@lucide/vue';
 import { createAsteroidsGame, } from './game.ts';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null,);
 const score = ref(0,);
 const lives = ref(3,);
+const wave = ref(1,);
 const gameOver = ref(false,);
+const combo = ref(0,);
+const waveLabel = ref('',);
 
+let waveTimer: ReturnType<typeof setTimeout> | null = null;
 let game: ReturnType<typeof createAsteroidsGame> | null = null;
+
+const comboLabel = computed(() => {
+  if (combo.value >= 10) return '4× COMBO!';
+  if (combo.value >= 6) return '3× COMBO!';
+  if (combo.value >= 3) return '2× COMBO!';
+  return '';
+},);
+
+const comboClass = computed(() => {
+  if (combo.value >= 10) return 'text-pink-400 border-pink-500/40 bg-pink-950/60';
+  if (combo.value >= 6) return 'text-orange-400 border-orange-500/40 bg-orange-950/60';
+  return 'text-yellow-400 border-yellow-500/40 bg-yellow-950/60';
+},);
+
+function showWave(n: number,) {
+  waveLabel.value = `WAVE ${n}`;
+  if (waveTimer) clearTimeout(waveTimer,);
+  waveTimer = setTimeout(() => { waveLabel.value = ''; }, 2000,);
+}
 
 function setCtrl(key: 'left' | 'right' | 'thrust' | 'fire', value: boolean,) {
   if (!game) return;
@@ -111,6 +157,10 @@ function restart() {
   gameOver.value = false;
   score.value = 0;
   lives.value = 3;
+  wave.value = 1;
+  combo.value = 0;
+  waveLabel.value = '';
+  if (waveTimer) { clearTimeout(waveTimer,); waveTimer = null; }
   game?.restart();
 }
 
@@ -120,10 +170,13 @@ onMounted(() => {
     onScore: (s,) => { score.value = s; },
     onLives: (l,) => { lives.value = l; },
     onGameOver: () => { gameOver.value = true; },
+    onCombo: (c,) => { combo.value = c; },
+    onWave: (n,) => { wave.value = n; showWave(n,); },
   },);
 },);
 
 onUnmounted(() => {
+  if (waveTimer) clearTimeout(waveTimer,);
   game?.destroy();
 },);
 </script>
@@ -133,4 +186,14 @@ onUnmounted(() => {
 .overlay-leave-active { transition: opacity 0.25s ease; }
 .overlay-enter-from,
 .overlay-leave-to { opacity: 0; }
+
+.powerup-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.powerup-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+.powerup-enter-from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+.powerup-leave-to { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+
+.wave-banner-enter-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+.wave-banner-leave-active { transition: opacity 0.5s ease, transform 0.5s ease; }
+.wave-banner-enter-from { opacity: 0; transform: translateX(-50%) translateY(-50%) scale(1.3); }
+.wave-banner-leave-to { opacity: 0; transform: translateX(-50%) translateY(-50%) scale(0.85); }
 </style>
