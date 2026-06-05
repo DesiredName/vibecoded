@@ -1,4 +1,4 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 
 const COLS = 16;
 const ROWS = 10;
@@ -35,6 +35,7 @@ type Tower = {
   type: TowerType;
   mesh: THREE.Mesh;
   cooldown: number;
+  spawnAnim: number;
 };
 
 type Enemy = {
@@ -57,6 +58,14 @@ type Projectile = {
   targetId: number;
   damage: number;
   splash: number;
+};
+
+type Particle = {
+  mesh: THREE.Mesh;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
 };
 
 function astar(
@@ -174,13 +183,82 @@ export function createTowerDefenseGame(canvas: HTMLCanvasElement, cb: Callbacks)
   dir.position.set(4, 6, 10);
   scene.add(dir);
 
-  // Shared geometries
-  const cellGeo  = new THREE.BoxGeometry(0.92, 0.92, 0.08);
-  const towerGeo = new THREE.BoxGeometry(0.65, 0.65, 0.55);
-  const enemyGeo = new THREE.SphereGeometry(0.30, 8, 6);
-  const projGeo  = new THREE.SphereGeometry(0.10, 6, 4);
-  const hpBgGeo  = new THREE.BoxGeometry(0.76, 0.07, 0.07);
-  const hpFgGeo  = new THREE.BoxGeometry(0.76, 0.07, 0.07);
+  const accentLight = new THREE.PointLight(0x4488ff, 0.7, 14);
+  scene.add(accentLight);
+  let accentAngle = 0;
+
+  const flashLight = new THREE.PointLight(0xffffff, 0, 12);
+  scene.add(flashLight);
+  let flashIntensity = 0;
+
+  const cellGeo     = new THREE.BoxGeometry(0.92, 0.92, 0.08);
+  const towerGeo    = new THREE.BoxGeometry(0.65, 0.65, 0.55);
+  const enemyGeo    = new THREE.SphereGeometry(0.30, 8, 6);
+  const projGeo     = new THREE.SphereGeometry(0.10, 6, 4);
+  const hpBgGeo     = new THREE.BoxGeometry(0.76, 0.07, 0.07);
+  const hpFgGeo     = new THREE.BoxGeometry(0.76, 0.07, 0.07);
+  const particleGeo = new THREE.SphereGeometry(0.08, 6, 4);
+
+  const particles: Particle[] = [];
+
+  function spawnParticles(count: number, x: number, y: number, color: number) {
+    for (let i = 0; i < count; i++) {
+      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1 });
+      const mesh = new THREE.Mesh(particleGeo, mat);
+      mesh.position.set(x, y, 0.7);
+      scene.add(mesh);
+      const theta = Math.random() * Math.PI * 2;
+      const speed = 1.5 + Math.random() * 4;
+      particles.push({
+        mesh,
+        vx: Math.cos(theta) * speed,
+        vy: Math.sin(theta) * speed,
+        life: 1,
+        maxLife: 0.3 + Math.random() * 0.35,
+      });
+    }
+  }
+
+  function updateParticles(dt: number) {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.life -= dt / p.maxLife;
+      if (p.life <= 0) {
+        scene.remove(p.mesh);
+        (p.mesh.material as THREE.MeshBasicMaterial).dispose();
+        particles.splice(i, 1);
+        continue;
+      }
+      const friction = Math.exp(-3 * dt);
+      p.vx *= friction;
+      p.vy *= friction;
+      p.mesh.position.x += p.vx * dt;
+      p.mesh.position.y += p.vy * dt;
+      const mat = p.mesh.material as THREE.MeshBasicMaterial;
+      mat.opacity = Math.min(1, p.life * 2);
+      p.mesh.scale.setScalar(0.3 + p.life * 0.7);
+    }
+  }
+
+  function cleanParticles() {
+    for (const p of particles) {
+      scene.remove(p.mesh);
+      (p.mesh.material as THREE.MeshBasicMaterial).dispose();
+    }
+    particles.length = 0;
+  }
+
+  let shakeAmt = 0;
+
+  function triggerShake(amt: number) {
+    shakeAmt = Math.max(shakeAmt, amt);
+  }
+
+  function triggerFlash(intensity: number, x: number, y: number, color: number) {
+    flashIntensity = Math.max(flashIntensity, intensity);
+    flashLight.color.setHex(color);
+    flashLight.position.set(x, y, 2);
+  }
 
   let mapData = generateMap();
   let { grid, path } = mapData;
@@ -247,8 +325,8 @@ export function createTowerDefenseGame(canvas: HTMLCanvasElement, cb: Callbacks)
 
   function enemyStats(w: number) {
     return {
-      hp: Math.round(80 * Math.pow(1.22, w - 1)),
-      armor: Math.min(0.60, (w - 1) * 0.025),
+      hp:    Math.round(80 * Math.pow(1.15, w - 1)),
+      armor: Math.min(0.60, (w - 1) * 0.0025),
       speed: 1.5 + (w - 1) * 0.08,
     };
   }
@@ -300,12 +378,13 @@ export function createTowerDefenseGame(canvas: HTMLCanvasElement, cb: Callbacks)
 
   function fireAt(tower: Tower, target: Enemy) {
     const stats = TOWER_DEFS[tower.type];
+    const scaledDamage = stats.damage * Math.pow(1.01, Math.max(0, wave - 1));
     const [tx, ty] = cellWorld(tower.col, tower.row);
     const color = tower.type === 'sniper' ? 0xcc88ff : tower.type === 'splash' ? 0xffaa00 : 0xffff44;
     const mesh = new THREE.Mesh(projGeo, new THREE.MeshBasicMaterial({ color }));
     mesh.position.set(tx, ty, 0.4);
     scene.add(mesh);
-    projectiles.push({ mesh, targetId: target.id, damage: stats.damage, splash: stats.splash });
+    projectiles.push({ mesh, targetId: target.id, damage: scaledDamage, splash: stats.splash });
   }
 
   function startWave() {
@@ -315,6 +394,9 @@ export function createTowerDefenseGame(canvas: HTMLCanvasElement, cb: Callbacks)
     spawnTimer = 0;
     phase = 'wave';
     cb.onPhase('wave');
+    const [sx, sy] = cellWorld(path[0][0], path[0][1]);
+    triggerShake(0.15);
+    triggerFlash(4, sx, sy, 0x4488ff);
   }
 
   const updateSize = () => {
@@ -351,6 +433,39 @@ export function createTowerDefenseGame(canvas: HTMLCanvasElement, cb: Callbacks)
     lastTime = now;
 
     if (isGameOver) { renderer.render(scene, camera); return; }
+
+    // Accent orbit (XY plane for top-down view)
+    accentAngle += dt * 0.5;
+    accentLight.position.set(Math.cos(accentAngle) * 6, Math.sin(accentAngle) * 3.5, 3);
+
+    // Flash decay
+    flashIntensity *= Math.exp(-10 * dt);
+    flashLight.intensity = flashIntensity;
+
+    // Screen shake (camera translates in XY, keeps top-down angle)
+    shakeAmt *= Math.exp(-6 * dt);
+    if (shakeAmt > 0.002) {
+      camera.position.set(
+        (Math.random() - 0.5) * shakeAmt * 0.8,
+        (Math.random() - 0.5) * shakeAmt * 0.8,
+        20,
+      );
+    } else {
+      camera.position.set(0, 0, 20);
+    }
+
+    // Tower spawn-pop animation
+    for (const t of towers) {
+      if (t.spawnAnim < 1) {
+        t.spawnAnim = Math.min(1, t.spawnAnim + dt / 0.2);
+        const s = t.spawnAnim < 0.6
+          ? t.spawnAnim / 0.6
+          : 1 + 0.35 * Math.sin(((t.spawnAnim - 0.6) / 0.4) * Math.PI);
+        t.mesh.scale.setScalar(s);
+      }
+    }
+
+    updateParticles(dt);
 
     if (phase === 'prep') {
       prepTimer -= dt;
@@ -392,11 +507,21 @@ export function createTowerDefenseGame(canvas: HTMLCanvasElement, cb: Callbacks)
 
       // Handle escaped
       for (const e of escaped) {
+        const ep = getEnemyPos(e);
+        spawnParticles(15, ep.x, ep.y, 0xff2233);
+        triggerFlash(5, ep.x, ep.y, 0xff2200);
+        triggerShake(0.3);
         removeEnemy(e);
         enemies = enemies.filter((x) => x.id !== e.id);
         lives = Math.max(0, lives - 1);
         cb.onLives(lives);
-        if (lives <= 0) { isGameOver = true; cb.onGameOver(); renderer.render(scene, camera); return; }
+        if (lives <= 0) {
+          triggerShake(0.6);
+          isGameOver = true;
+          cb.onGameOver();
+          renderer.render(scene, camera);
+          return;
+        }
       }
 
       // Towers fire
@@ -440,6 +565,11 @@ export function createTowerDefenseGame(canvas: HTMLCanvasElement, cb: Callbacks)
       // Kill dead enemies
       const dead = enemies.filter((e) => e.hp <= 0);
       for (const e of dead) {
+        const ep = getEnemyPos(e);
+        const enemyColor = wave >= 5 ? 0xff5500 : 0xff2233;
+        spawnParticles(20, ep.x, ep.y, enemyColor);
+        triggerFlash(8, ep.x, ep.y, enemyColor);
+        triggerShake(0.08);
         removeEnemy(e);
         const orphans = projectiles.filter((p) => p.targetId === e.id);
         orphans.forEach(removeProj);
@@ -466,7 +596,6 @@ export function createTowerDefenseGame(canvas: HTMLCanvasElement, cb: Callbacks)
 
   tick();
 
-  // Emit initial state
   cb.onGold(gold);
   cb.onLives(lives);
   cb.onWave(wave);
@@ -506,9 +635,30 @@ export function createTowerDefenseGame(canvas: HTMLCanvasElement, cb: Callbacks)
     });
     const mesh = new THREE.Mesh(towerGeo, mat);
     mesh.position.set(wx, wy, 0.35);
+    mesh.scale.setScalar(0);
     scene.add(mesh);
-    towers.push({ col, row, type, mesh, cooldown: 0 });
+    towers.push({ col, row, type, mesh, cooldown: 0, spawnAnim: 0 });
+    spawnParticles(10, wx, wy, stats.color);
+    triggerShake(0.04);
+    triggerFlash(3, wx, wy, stats.color);
     return true;
+  }
+
+  function sellTower(col: number, row: number): number {
+    if (isGameOver) return 0;
+    const idx = towers.findIndex((t) => t.col === col && t.row === row);
+    if (idx < 0) return 0;
+    const [t] = towers.splice(idx, 1);
+    const refund = Math.floor(TOWER_DEFS[t.type].cost * 0.5);
+    scene.remove(t.mesh);
+    (t.mesh.material as THREE.Material).dispose();
+    const [wx, wy] = cellWorld(t.col, t.row);
+    gold += refund;
+    cb.onGold(gold);
+    spawnParticles(12, wx, wy, 0xffd700);
+    triggerShake(0.03);
+    triggerFlash(4, wx, wy, 0xffd700);
+    return refund;
   }
 
   function clearAll() {
@@ -518,11 +668,13 @@ export function createTowerDefenseGame(canvas: HTMLCanvasElement, cb: Callbacks)
     projectiles = [];
     towers.forEach((t) => { scene.remove(t.mesh); (t.mesh.material as THREE.Material).dispose(); });
     towers.length = 0;
+    cleanParticles();
   }
 
   return {
     canvasToCell,
     placeTower,
+    sellTower,
     restart() {
       clearAll();
       clearGrid();
@@ -533,6 +685,7 @@ export function createTowerDefenseGame(canvas: HTMLCanvasElement, cb: Callbacks)
       wave = 0; phase = 'prep'; prepTimer = PREP_TIME;
       gold = INITIAL_GOLD; lives = INITIAL_LIVES; score = 0;
       isGameOver = false; enemiesToSpawn = 0; spawnTimer = 0; nextId = 0;
+      shakeAmt = 0; flashIntensity = 0; flashLight.intensity = 0;
       cb.onGold(gold); cb.onLives(lives); cb.onWave(wave);
       cb.onScore(score); cb.onPhase('prep'); cb.onPrepTimer(prepTimer);
     },
@@ -542,7 +695,7 @@ export function createTowerDefenseGame(canvas: HTMLCanvasElement, cb: Callbacks)
       clearAll();
       clearGrid();
       cellGeo.dispose(); towerGeo.dispose(); enemyGeo.dispose();
-      projGeo.dispose(); hpBgGeo.dispose(); hpFgGeo.dispose();
+      projGeo.dispose(); hpBgGeo.dispose(); hpFgGeo.dispose(); particleGeo.dispose();
       renderer.dispose();
     },
   };

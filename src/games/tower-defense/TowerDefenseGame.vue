@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="relative w-full h-full select-none overflow-hidden">
     <canvas
       ref="canvasRef"
@@ -32,7 +32,17 @@
       </div>
     </Transition>
 
-    <!-- Tower selector bar -->
+    <!-- Sell mode hint -->
+    <Transition name="overlay">
+      <div
+        v-if="sellMode && !gameOver"
+        class="absolute left-1/2 bottom-24 -translate-x-1/2 bg-red-950/90 border border-red-500/50 rounded-lg px-4 py-1.5 text-red-300 text-xs font-mono pointer-events-none whitespace-nowrap"
+      >
+        Tap a tower to sell it for 50%
+      </div>
+    </Transition>
+
+    <!-- Tower selector + sell bar -->
     <div
       v-if="!gameOver"
       class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2"
@@ -41,11 +51,11 @@
         v-for="t in towerTypes"
         :key="t"
         class="flex flex-col items-center rounded-xl border-2 transition-colors px-3 py-1.5 min-w-18 sm:min-w-20 active:opacity-70"
-        :class="selectedTower === t
+        :class="selectedTower === t && !sellMode
           ? 'bg-gray-700/90 border-white/30'
           : 'bg-gray-900/80 border-gray-600/40 hover:border-gray-500/60'"
-        :style="selectedTower === t ? { borderColor: DEFS[t].hex } : {}"
-        @click.stop="selectedTower = t"
+        :style="selectedTower === t && !sellMode ? { borderColor: DEFS[t].hex } : {}"
+        @click.stop="selectTower(t)"
       >
         <component
           :is="DEFS[t].icon"
@@ -56,6 +66,29 @@
         <span class="text-white text-xs font-mono">{{ DEFS[t].label }}</span>
         <span class="text-yellow-400 text-xs font-mono">{{ DEFS[t].cost }}g</span>
       </button>
+
+      <!-- Sell button -->
+      <button
+        class="flex flex-col items-center rounded-xl border-2 transition-colors px-3 py-1.5 min-w-18 sm:min-w-20 active:opacity-70"
+        :class="sellMode
+          ? 'bg-red-900/80 border-red-400'
+          : 'bg-gray-900/80 border-gray-600/40 hover:border-red-500/60'"
+        @click.stop="sellMode = !sellMode"
+      >
+        <Trash2
+          :size="16"
+          class="mb-0.5"
+          :style="{ color: sellMode ? '#f87171' : '#9ca3af' }"
+        />
+        <span
+          class="text-xs font-mono"
+          :class="sellMode ? 'text-red-300' : 'text-gray-400'"
+        >Sell</span>
+        <span
+          class="text-xs font-mono"
+          :class="sellMode ? 'text-red-400' : 'text-gray-500'"
+        >50%</span>
+      </button>
     </div>
 
     <!-- Insufficient gold flash -->
@@ -65,6 +98,16 @@
         class="absolute left-1/2 bottom-24 -translate-x-1/2 bg-red-900/80 border border-red-500/50 rounded-lg px-4 py-1.5 text-red-300 text-sm font-mono pointer-events-none"
       >
         Not enough gold!
+      </div>
+    </Transition>
+
+    <!-- Sold notification -->
+    <Transition name="overlay">
+      <div
+        v-if="soldLabel"
+        class="absolute left-1/2 bottom-24 -translate-x-1/2 bg-yellow-900/80 border border-yellow-500/50 rounded-lg px-4 py-1.5 text-yellow-300 text-sm font-mono pointer-events-none"
+      >
+        {{ soldLabel }}
       </div>
     </Transition>
 
@@ -96,7 +139,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { Shield, Zap, Bomb } from '@lucide/vue';
+import { Shield, Zap, Bomb, Trash2 } from '@lucide/vue';
 import { createTowerDefenseGame, TOWER_DEFS } from './game.ts';
 import type { TowerType, Phase } from './game.ts';
 
@@ -109,7 +152,9 @@ const phase = ref<Phase>('prep');
 const prepTimer = ref(6);
 const gameOver = ref(false);
 const showNoGold = ref(false);
+const soldLabel = ref('');
 const selectedTower = ref<TowerType>('basic');
+const sellMode = ref(false);
 
 const towerTypes: TowerType[] = ['basic', 'sniper', 'splash'];
 
@@ -121,6 +166,7 @@ const DEFS = {
 
 let game: ReturnType<typeof createTowerDefenseGame> | null = null;
 let noGoldTimer: ReturnType<typeof setTimeout> | null = null;
+let soldTimer: ReturnType<typeof setTimeout> | null = null;
 
 function flashNoGold() {
   showNoGold.value = true;
@@ -128,10 +174,31 @@ function flashNoGold() {
   noGoldTimer = setTimeout(() => { showNoGold.value = false; }, 1200);
 }
 
+function showSold(refund: number) {
+  soldLabel.value = `+${refund}g sold`;
+  if (soldTimer) clearTimeout(soldTimer);
+  soldTimer = setTimeout(() => { soldLabel.value = ''; }, 1400);
+}
+
+function selectTower(type: TowerType) {
+  selectedTower.value = type;
+  sellMode.value = false;
+}
+
 function onCanvasClick(e: MouseEvent) {
   if (!game || gameOver.value) return;
   const cell = game.canvasToCell(e.clientX, e.clientY);
   if (!cell) return;
+
+  if (sellMode.value) {
+    const refund = game.sellTower(cell.col, cell.row);
+    if (refund > 0) {
+      showSold(refund);
+      sellMode.value = false;
+    }
+    return;
+  }
+
   const placed = game.placeTower(cell.col, cell.row, selectedTower.value);
   if (!placed && gold.value < TOWER_DEFS[selectedTower.value].cost) flashNoGold();
 }
@@ -139,6 +206,8 @@ function onCanvasClick(e: MouseEvent) {
 function restart() {
   gameOver.value = false;
   showNoGold.value = false;
+  soldLabel.value = '';
+  sellMode.value = false;
   game?.restart();
 }
 
@@ -151,12 +220,13 @@ onMounted(() => {
     onLives:     (l) => { lives.value = l; },
     onPhase:     (p) => { phase.value = p; },
     onPrepTimer: (s) => { prepTimer.value = s; },
-    onGameOver:  () => { gameOver.value = true; },
+    onGameOver:  () => { gameOver.value = true; sellMode.value = false; },
   });
 });
 
 onUnmounted(() => {
   if (noGoldTimer) clearTimeout(noGoldTimer);
+  if (soldTimer) clearTimeout(soldTimer);
   game?.destroy();
 });
 </script>
