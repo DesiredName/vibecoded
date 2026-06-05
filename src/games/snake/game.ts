@@ -322,7 +322,34 @@ export function createSnakeGame(canvas: HTMLCanvasElement, callbacks: Callbacks,
     else if ((e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') && d !== 'left') state.nextDir = 'right';
   }
 
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const SWIPE_THRESHOLD = 30;
+
+  function onTouchStart(e: TouchEvent,) {
+    e.preventDefault();
+    touchStartX = e.touches[0]!.clientX;
+    touchStartY = e.touches[0]!.clientY;
+  }
+
+  function onTouchEnd(e: TouchEvent,) {
+    e.preventDefault();
+    const dx = e.changedTouches[0]!.clientX - touchStartX;
+    const dy = e.changedTouches[0]!.clientY - touchStartY;
+    if (Math.abs(dx,) < SWIPE_THRESHOLD && Math.abs(dy,) < SWIPE_THRESHOLD) return;
+    const d = state.dir;
+    if (Math.abs(dx,) > Math.abs(dy,)) {
+      if (dx > 0 && d !== 'left') state.nextDir = 'right';
+      else if (dx < 0 && d !== 'right') state.nextDir = 'left';
+    } else {
+      if (dy > 0 && d !== 'up') state.nextDir = 'down';
+      else if (dy < 0 && d !== 'down') state.nextDir = 'up';
+    }
+  }
+
   window.addEventListener('keydown', onKey,);
+  canvas.addEventListener('touchstart', onTouchStart, { passive: false, },);
+  canvas.addEventListener('touchend', onTouchEnd, { passive: false, },);
 
   function resize() {
     const w = canvas.clientWidth || canvas.offsetWidth;
@@ -426,6 +453,8 @@ export function createSnakeGame(canvas: HTMLCanvasElement, callbacks: Callbacks,
       cancelAnimationFrame(animId,);
       ro.disconnect();
       window.removeEventListener('keydown', onKey,);
+      canvas.removeEventListener('touchstart', onTouchStart,);
+      canvas.removeEventListener('touchend', onTouchEnd,);
       cleanParticles();
       renderer.dispose();
     },
