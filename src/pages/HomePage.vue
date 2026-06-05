@@ -20,8 +20,8 @@
         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
       >
         <template
-          v-for="cell in gridItems"
-          :key="cell.type === 'game' ? cell.game.id : cell.item.id"
+          v-for="(cell, idx) in gridItems"
+          :key="cell.type === 'game' ? cell.game.id : `news-${idx}`"
         >
           <GameCard
             v-if="cell.type === 'game'"
@@ -52,14 +52,15 @@ import type { NewsItem, } from '../types/news.ts';
 
 type GridItem =
   | { type: 'game'; game: Game }
-  | { type: 'news'; item: NewsItem };
+  | { type: 'news'; item: NewsItem | null };
 
 const gridItems = computed<GridItem[]>(() => {
   const result: GridItem[] = [];
   let newsIdx = 0;
   gamesStore.games.forEach((game, i,) => {
-    if (i > 0 && i % 3 === 0 && newsIdx < newsStore.items.length) {
-      result.push({ type: 'news', item: newsStore.items[newsIdx++], },);
+    if (i > 0 && i % 3 === 0) {
+      result.push({ type: 'news', item: newsStore.items[newsIdx] ?? null, },);
+      newsIdx++;
     }
     result.push({ type: 'game', game, },);
   },);
