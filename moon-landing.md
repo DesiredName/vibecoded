@@ -37,7 +37,7 @@ Files (to create): `src/games/moon-landing/game.ts`, `src/games/moon-landing/Moo
 
 ### Phase 3 — Mobile Analog Controls (sliders in Vue)
 - Left thrust slider: full-height touch strip, thumb follows finger, value 0→1
-- Right tilt slider: full-height touch strip, spring-back to center on release, value -1→+1
+- Right tilt slider: full-height touch strip, sticky on release (holds last position), value -1→+1
 - Both sliders write into `game.controls.thrust` / `game.controls.tilt`
 - Visual polish: thumb glow tracks thrust intensity, center notch on tilt track
 - Touch event handling: `touchstart`, `touchmove`, `touchend` / `touchcancel`
@@ -115,7 +115,7 @@ THRUST_DRAG     0.98 (per frame, vel *= drag^(dt*60))  — slight damping
 ANGULAR_ACCEL   4.0 rad/s²             (scaled by tilt input -1..1)
 ANGULAR_DRAG    0.88 (per frame)       — rotation bleeds off quickly so it's controllable
 FUEL_MAX        100
-FUEL_RATE       thrust * 18 /s         — full thrust drains in ~5.5s; gentle hover drains slowly
+FUEL_RATE       per-theme (see Themes) — Moon 18/s (base), Mars 16.4/s (+10%), Venus 14.4/s (+25%), Jupiter 12.9/s (+40%)
 
 Each frame:
   velX += sin(angle) * thrust * MAX_THRUST * dt
@@ -181,6 +181,7 @@ Pad difficulty increases per level:
 type Theme = {
   name: string;
   gravity: number;         // units/s²
+  fuelRate: number;        // fuel drain per second at full thrust (lower = more effective fuel)
   skyColor: number;        // scene background
   groundColor: number;     // terrain fill
   groundEdgeColor: number; // terrain outline / edge highlight
@@ -195,6 +196,7 @@ const THEMES = {
   moon: {
     name: 'Moon',
     gravity: 80,           // low — very floaty, forgiving
+    fuelRate: 18,          // base fuel drain
     skyColor: 0x020408,
     groundColor: 0x3a3a4a,
     groundEdgeColor: 0x8888aa,
@@ -207,6 +209,7 @@ const THEMES = {
   mars: {
     name: 'Mars',
     gravity: 130,          // medium — more urgent
+    fuelRate: 16.4,        // +10% effective fuel vs Moon
     skyColor: 0x100504,
     groundColor: 0x6b3020,
     groundEdgeColor: 0xcc6644,
@@ -219,6 +222,7 @@ const THEMES = {
   venus: {
     name: 'Venus',
     gravity: 190,          // high — challenging, punishing
+    fuelRate: 14.4,        // +25% effective fuel vs Moon
     skyColor: 0x040d08,
     groundColor: 0x1a4030,
     groundEdgeColor: 0x44cc88,
@@ -231,6 +235,7 @@ const THEMES = {
   jupiter: {
     name: 'Jupiter',
     gravity: 260,          // brutal — expert only
+    fuelRate: 12.9,        // +40% effective fuel vs Moon
     skyColor: 0x080601,
     groundColor: 0x5a3d10,
     groundEdgeColor: 0xffbb44,
@@ -252,7 +257,8 @@ Theme is randomly selected at game start (or player-chosen in future). Each them
 ### Left Slider — Thrust (0 → 1)
 
 ```
-Full-height draggable strip on the left edge (~70px wide).
+Full-height touch zone on the left edge (~70px wide).
+Visual track: centered, 50% of screen height (top-[25%] bottom-[25%]).
 Thumb starts at BOTTOM (thrust = 0) each attempt.
 
 thumbY = clamp(touchY, stripTop, stripBottom)
@@ -269,8 +275,9 @@ Visual:
 ### Right Slider — Tilt (-1 → +1)
 
 ```
-Full-height draggable strip on the right edge (~70px wide).
-Thumb springs back to CENTER (tilt = 0) on release.
+Full-height touch zone on the right edge (~70px wide).
+Visual track: centered, 50% of screen height (top-[25%] bottom-[25%]).
+Thumb is STICKY on release — holds last position, no spring-back.
 
 thumbY = clamp(touchY, stripTop, stripBottom)
 tilt = 1 - (thumbY - stripTop) / (stripHeight / 2) - 1
@@ -281,7 +288,7 @@ Visual:
   - Thumb: circle with left/right arrow icon
   - Tilts slightly to show which direction ship will rotate
   - "TILT" label rotated 90°
-  - On release: thumb animates back to center (CSS transition 150ms)
+  - On release: thumb stays at current position (no animation)
 ```
 
 ### Desktop Controls
@@ -582,7 +589,7 @@ This is a brand-new game. No prior version.
 
 ## Open Questions / Decisions
 
-- Tilt slider: spring-back to center on release? (Yes — easier for beginners, feels more responsive)
+- Tilt slider: spring-back to center on release? (No — sticky/hold-last-position; player explicitly controls tilt direction)
 - Camera: always centered on ship, or fixed once ship goes below certain altitude? → track ship always, pad always visible near bottom
 - Multiple levels in one "session" (accumulate score) or each level standalone? → accumulate, session ends on crash
 - Theme selector on home screen before game starts, or random? → random each session, shown in countdown

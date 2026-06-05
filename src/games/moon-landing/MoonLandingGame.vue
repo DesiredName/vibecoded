@@ -109,7 +109,7 @@
       ref="thrustSliderRef"
       class="absolute left-0 top-0 bottom-0 w-17.5 select-none touch-none"
     >
-      <div class="absolute inset-x-0 top-10 bottom-10 flex justify-center">
+      <div class="absolute inset-x-0 top-[25%] bottom-[25%] flex justify-center">
         <div class="relative w-8 h-full rounded-full bg-white/5 border border-white/10 overflow-visible">
           <!-- Fill -->
           <div
@@ -138,7 +138,7 @@
       ref="tiltSliderRef"
       class="absolute right-0 top-0 bottom-0 w-17.5 select-none touch-none"
     >
-      <div class="absolute inset-x-0 top-10 bottom-10 flex justify-center">
+      <div class="absolute inset-x-0 top-[25%] bottom-[25%] flex justify-center">
         <div class="relative w-8 h-full rounded-full bg-white/5 border border-white/10 overflow-visible">
           <!-- Center notch -->
           <div class="absolute left-0 right-0 h-px bg-white/25 pointer-events-none" style="top: 50%;" />
@@ -293,7 +293,6 @@ const thrustSliderRef = ref<HTMLElement | null>(null,);
 const tiltSliderRef = ref<HTMLElement | null>(null,);
 const thrustValue = ref(0,);
 const tiltValue = ref(0,);
-const tiltReleasing = ref(false,);
 let thrustTouchId: number | null = null;
 let tiltTouchId: number | null = null;
 
@@ -418,7 +417,7 @@ const tiltThumbStyle = computed(() => ({
   background: 'rgba(12,14,22,0.95)',
   border: '2px solid rgba(96,165,250,0.65)',
   boxShadow: Math.abs(tiltValue.value,) > 0.1 ? '0 0 10px rgba(96,165,250,0.4)' : 'none',
-  transition: tiltReleasing.value ? 'top 150ms ease-out' : 'none',
+  transition: 'none',
 }),);
 
 // --- Game instance ---
@@ -536,7 +535,6 @@ function onTiltStart(e: TouchEvent) {
   if (tiltTouchId !== null) return;
   const touch = e.changedTouches[0];
   tiltTouchId = touch.identifier;
-  tiltReleasing.value = false;
   applyTilt(touch.clientY,);
 }
 
@@ -555,9 +553,6 @@ function onTiltEnd(e: TouchEvent) {
   for (const touch of Array.from(e.changedTouches,)) {
     if (touch.identifier === tiltTouchId) {
       tiltTouchId = null;
-      tiltReleasing.value = true;
-      tiltValue.value = 0;
-      if (game) game.controls.tilt = 0;
       break;
     }
   }

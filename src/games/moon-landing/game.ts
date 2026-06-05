@@ -6,6 +6,7 @@ export type PickupType = 'fuel' | 'score' | 'slowmo';
 type Theme = {
   name: string;
   gravity: number;
+  fuelRate: number;
   skyColor: number;
   groundColor: number;
   groundEdgeColor: number;
@@ -79,7 +80,6 @@ const THRUST_DRAG = 0.98;
 const ANGULAR_ACCEL = 4.0;
 const ANGULAR_DRAG = 0.88;
 const FUEL_MAX = 100;
-const FUEL_RATE = 18;
 const SAFE_VSPEED = 45;
 const SAFE_HSPEED = 25;
 const SAFE_ANGLE = 0.30;
@@ -96,6 +96,7 @@ const THEMES: Record<string, Theme> = {
   moon: {
     name: 'Moon',
     gravity: 80,
+    fuelRate: 18,
     skyColor: 0x020408,
     groundColor: 0x3a3a4a,
     groundEdgeColor: 0x8888aa,
@@ -108,6 +109,7 @@ const THEMES: Record<string, Theme> = {
   mars: {
     name: 'Mars',
     gravity: 130,
+    fuelRate: 16.4,
     skyColor: 0x100504,
     groundColor: 0x6b3020,
     groundEdgeColor: 0xcc6644,
@@ -120,6 +122,7 @@ const THEMES: Record<string, Theme> = {
   venus: {
     name: 'Venus',
     gravity: 190,
+    fuelRate: 14.4,
     skyColor: 0x040d08,
     groundColor: 0x1a4030,
     groundEdgeColor: 0x44cc88,
@@ -132,6 +135,7 @@ const THEMES: Record<string, Theme> = {
   jupiter: {
     name: 'Jupiter',
     gravity: 260,
+    fuelRate: 12.9,
     skyColor: 0x080601,
     groundColor: 0x5a3d10,
     groundEdgeColor: 0xffbb44,
@@ -774,7 +778,7 @@ export function createMoonLandingGame(
       const tiltIn = Math.max(-1, Math.min(1, (tiltRight ? 1 : 0) - (tiltLeft ? 1 : 0) + controls.tilt));
 
       const effectiveThrust = fuel > 0 ? thrustIn : 0;
-      fuel = Math.max(0, fuel - effectiveThrust * FUEL_RATE * scaledDt);
+      fuel = Math.max(0, fuel - effectiveThrust * theme.fuelRate * scaledDt);
       cb.onFuel(fuel);
 
       const drag = Math.pow(THRUST_DRAG, scaledDt * 60);
